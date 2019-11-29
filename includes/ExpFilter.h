@@ -17,7 +17,7 @@ class ExpFilter{
         ExpFilter(float *val, int val_len, float alpha_decay, float alpha_rise);
         ExpFilter(int val_len, float alpha_decay, float alpha_rise);
         ~ExpFilter();
-       void update(float * data);
+        void update(float * data);
         void update(uint8_t * data);
         void update0(float * data);
         float * value();

@@ -24,9 +24,9 @@ class VisualEffect{
       float * _spectrum, * _prev_spectrum;
     public:
         VisualEffect(uint16_t mel_num, uint16_t leds_num);
-        void visualize_scroll(float * mel_data, CRGB * physic_leds);
-        void visualize_energy(float * mel_data, CRGB * physic_leds);
-        void visualize_spectrum(float * mel_data, CRGB * physic_leds);
+        void visualize_scroll(float * mel_data, CRGB * physic_leds, int max_rgb);
+        void visualize_energy(float * mel_data, CRGB * physic_leds, int max_rgb);
+        void visualize_spectrum(float * mel_data, CRGB * physic_leds, int max_rgb);
         ~VisualEffect();
 };
 
@@ -80,7 +80,7 @@ void VisualEffect::mirror(CRGB * physic_leds){
   }
 }
 
-void VisualEffect::visualize_scroll(float * mel_data, CRGB * physic_leds){
+void VisualEffect::visualize_scroll(float * mel_data, CRGB * physic_leds, int max_rgb){
   float rr,gg,bb;
 
   for (int i = 0; i < _mel_num; i++)
@@ -111,14 +111,14 @@ void VisualEffect::visualize_scroll(float * mel_data, CRGB * physic_leds){
   _gauss02->process(_leds[1],_leds_num/2);
   _gauss02->process(_leds[2],_leds_num/2);
 
-  _leds[0][0]  = 255*rr;
-  _leds[1][0]  = 255*gg;
-  _leds[2][0]  = 255*bb;
+  _leds[0][0] = max_rgb*rr;
+  _leds[1][0] = max_rgb*gg;
+  _leds[2][0] = max_rgb*bb;
 
   mirror(physic_leds);
 }
 
-void VisualEffect::visualize_energy(float * mel_data, CRGB * physic_leds){
+void VisualEffect::visualize_energy(float * mel_data, CRGB * physic_leds, int max_rgb){
   float rr,gg,bb;
   int ri,gi,bi;
 
@@ -149,9 +149,9 @@ void VisualEffect::visualize_energy(float * mel_data, CRGB * physic_leds){
   gg =gg*_leds_num/2/gi;
 
   for(int i=0; i<_leds_num/2; i++){
-    _leds[0][i] = (i+1>rr)?0:255;
-    _leds[1][i] = (i+1>gg)?0:255;
-    _leds[2][i] = (i+1>bb)?0:255;
+    _leds[0][i] = (i+1>rr)?0:max_rgb;
+    _leds[1][i] = (i+1>gg)?0:max_rgb;
+    _leds[2][i] = (i+1>bb)?0:max_rgb;
   }
 
   _p_filt_r->update(_leds[0]);
@@ -164,7 +164,7 @@ void VisualEffect::visualize_energy(float * mel_data, CRGB * physic_leds){
   mirror(physic_leds);
 }
 
-void VisualEffect::visualize_spectrum(float * mel_data, CRGB * physic_leds){
+void VisualEffect::visualize_spectrum(float * mel_data, CRGB * physic_leds, int max_rgb){
   float one_unit = 1.0/(_leds_num/2-1);
   int j=1;
   _spectrum[0] = mel_data[0];
@@ -181,9 +181,9 @@ void VisualEffect::visualize_spectrum(float * mel_data, CRGB * physic_leds){
   _common_mode->update0(_spectrum);
 
   for(int i=0; i<_leds_num/2; i++){
-    _leds[0][i] = (_spectrum[i]-_common_mode->value()[i])*255;
-    _leds[1][i] = fabs(_spectrum[i]-_prev_spectrum[i])*255;
-    _leds[2][i] = _spectrum[i]*255;
+    _leds[0][i] = (_spectrum[i]-_common_mode->value()[i])*max_rgb;
+    _leds[1][i] = fabs(_spectrum[i]-_prev_spectrum[i])*max_rgb;
+    _leds[2][i] = _spectrum[i]*max_rgb;
     _prev_spectrum[i] = _spectrum[i];
   }
   _r_filt->update(_leds[0]);

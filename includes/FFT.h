@@ -15,7 +15,7 @@ class FFT{
     private:
         float* _hammer=NULL;
         uint16_t _num_mel_bands, _num_samples, _sample_rate;
-        float _min_frequency, _max_frequency, _min_volume_threshold;
+        float _min_frequency, _max_frequency;
         float * _y_data_cal;
         float** _melmat=NULL;
         float hz2mel(float f);
@@ -25,22 +25,21 @@ class FFT{
         class ExpFilter * _mel_gain, * _mel_smoothing;
 
     public:
-        FFT(uint16_t samples, uint16_t n_mel_bin, float min_frequency, float max_frequency, uint16_t sample_rate, float min_volume_threshold);
+        FFT(uint16_t samples, uint16_t n_mel_bin, float min_frequency, float max_frequency, uint16_t sample_rate);
         ~FFT();
         void fft(float * real, float * imag);
         void fft(float * real);
         void abs(float * real, float * imag);
         void hamming(float *real);
-        void t2mel(float * y_data, float * mel_data);
+        void t2mel(float * y_data, float * mel_data, float min_volume_threshold);
 };
 
-FFT::FFT(uint16_t samples, uint16_t n_mel_bin, float min_frequency, float max_frequency, uint16_t sample_rate, float min_volume_threshold){
+FFT::FFT(uint16_t samples, uint16_t n_mel_bin, float min_frequency, float max_frequency, uint16_t sample_rate){
     _num_samples = samples;
     _num_mel_bands = n_mel_bin;
     _min_frequency = min_frequency;
     _max_frequency = max_frequency;
     _sample_rate = sample_rate;
-    _min_volume_threshold = min_volume_threshold;
 
     compute_hammer();
     compute_melmat(_num_mel_bands, _min_frequency, _max_frequency, _num_samples/2, _sample_rate);
@@ -92,7 +91,7 @@ void FFT::compute_melmat(uint16_t num_mel_bands, float freq_min, float freq_max,
 
     float lowFreqMel = hz2mel(freq_min);
     float highFreqMel = hz2mel (freq_max);
-    
+
     float* filterCentreFreq = new float[num_mel_bands+2];
     for(uint16_t i=0; i<num_mel_bands+2; i++)
         filterCentreFreq[i] = mel2hz(lowFreqMel + (highFreqMel-lowFreqMel)/(num_mel_bands+1)*i);
@@ -144,7 +143,7 @@ void FFT::fft(float * real, float * imag){
         j += k;
     }
 
-    // Compute the POWER  
+    // Compute the POWER
     uint8_t power = 0;
     while (((_num_samples >> power) & 1) != 1) power++;
 
@@ -183,7 +182,7 @@ void FFT::abs(float * real, float * imag){
     }
 }
 
-void FFT::t2mel(float * y_data, float * mel_data){
+void FFT::t2mel(float * y_data, float * mel_data, float min_volume_threshold){
   float minData, maxData;
   minData = y_data[0];
   maxData = y_data[0];
@@ -191,7 +190,7 @@ void FFT::t2mel(float * y_data, float * mel_data){
   for(jj=1; jj<_num_samples; jj++){
     if(y_data[jj]<minData) minData=y_data[jj];
     if(y_data[jj]>maxData) maxData=y_data[jj];
-    if(maxData-minData>_min_volume_threshold) break;
+    if(maxData-minData>min_volume_threshold) break;
   }
   if(jj==_num_samples){
     for(int i=0; i<_num_mel_bands; i++)
